@@ -9,4 +9,6 @@ public interface VotoRepository extends JpaRepository<Voto, UUID> {
 
     long countByPautaIdAndVoto(UUID pautaId, TipoVoto voto);
     
+    boolean existsByPautaIdAndCpfAssociado(UUID pautaId, String cpf);
+    
 }
