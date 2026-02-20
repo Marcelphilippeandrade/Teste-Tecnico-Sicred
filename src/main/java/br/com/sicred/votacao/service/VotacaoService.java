@@ -15,6 +15,7 @@ import br.com.sicred.votacao.exception.business.SessaoEncerradaException;
 import br.com.sicred.votacao.exception.business.SessaoJaAbertaException;
 import br.com.sicred.votacao.exception.business.SessaoNaoEncontradaException;
 import br.com.sicred.votacao.exception.business.VotoDuplicadoException;
+import br.com.sicred.votacao.integration.client.CpfValidationClient;
 import br.com.sicred.votacao.modelo.Pauta;
 import br.com.sicred.votacao.modelo.Sessao;
 import br.com.sicred.votacao.modelo.Voto;
@@ -28,13 +29,16 @@ public class VotacaoService {
 	private final PautaRepository pautaRepository;
 	private final SessaoRepository sessaoRepository;
 	private final VotoRepository votoRepository;
+	
+	private final CpfValidationClient cpfValidationClient;
 
 	public VotacaoService(PautaRepository pautaRepository, SessaoRepository sessaoRepository,
-			VotoRepository votoRepository) {
+			VotoRepository votoRepository, CpfValidationClient cpfValidationClient) {
 
 		this.pautaRepository = pautaRepository;
 		this.sessaoRepository = sessaoRepository;
 		this.votoRepository = votoRepository;
+		this.cpfValidationClient = cpfValidationClient;
 	}
 
 	public Pauta criarPauta(PautaDTO dto) {
@@ -76,6 +80,8 @@ public class VotacaoService {
 	            pautaId, dto.cpf())) {
 	        throw new VotoDuplicadoException();
 	    }
+	    
+	    cpfValidationClient.validarCpfParaVoto(dto.cpf());
 
 	    Voto voto = new Voto();
 	    voto.setCpfAssociado(dto.cpf());
