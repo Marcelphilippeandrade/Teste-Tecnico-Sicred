@@ -8,7 +8,7 @@
 		<version>3.5.11</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>br.com.sicredi</groupId>
+	<groupId>br.com.sicred</groupId>
 	<artifactId>sicredi-votacao</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>sicredi-votacao</name>
@@ -80,11 +80,11 @@
             <version>2.6.0</version>
         </dependency>
         
-        <!-- Lombok -->
+         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <optional>true</optional>
+            <scope>provided</scope>
         </dependency>
         
 	</dependencies>
