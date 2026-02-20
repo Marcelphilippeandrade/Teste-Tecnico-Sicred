@@ -13,7 +13,15 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(uniqueConstraints = { @UniqueConstraint(columnNames = { "pauta_id", "cpfAssociado" }) })
 public class Voto {
@@ -31,36 +39,5 @@ public class Voto {
 	@JoinColumn(name = "pauta_id")
 	private Pauta pauta;
 
-	public UUID getId() {
-		return id;
-	}
-
-	public void setId(UUID id) {
-		this.id = id;
-	}
-
-	public String getCpfAssociado() {
-		return cpfAssociado;
-	}
-
-	public void setCpfAssociado(String cpfAssociado) {
-		this.cpfAssociado = cpfAssociado;
-	}
-
-	public TipoVoto getVoto() {
-		return voto;
-	}
-
-	public void setVoto(TipoVoto voto) {
-		this.voto = voto;
-	}
-
-	public Pauta getPauta() {
-		return pauta;
-	}
-
-	public void setPauta(Pauta pauta) {
-		this.pauta = pauta;
-	}
 
 }

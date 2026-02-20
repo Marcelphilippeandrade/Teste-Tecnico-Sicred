@@ -9,7 +9,15 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 public class Sessao {
 
@@ -23,37 +31,5 @@ public class Sessao {
 	@OneToOne
 	@JoinColumn(name = "pauta_id")
 	private Pauta pauta;
-
-	public UUID getId() {
-		return id;
-	}
-
-	public void setId(UUID id) {
-		this.id = id;
-	}
-
-	public LocalDateTime getInicio() {
-		return inicio;
-	}
-
-	public void setInicio(LocalDateTime inicio) {
-		this.inicio = inicio;
-	}
-
-	public LocalDateTime getFim() {
-		return fim;
-	}
-
-	public void setFim(LocalDateTime fim) {
-		this.fim = fim;
-	}
-
-	public Pauta getPauta() {
-		return pauta;
-	}
-
-	public void setPauta(Pauta pauta) {
-		this.pauta = pauta;
-	}
 
 }
