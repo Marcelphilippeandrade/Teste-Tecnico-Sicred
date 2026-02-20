@@ -1,4 +1,4 @@
-package br.com.sicred.votacao.exception;
+package br.com.sicred.votacao.exception.business;
 
 public class SessaoJaAbertaException extends RuntimeException {
 

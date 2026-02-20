@@ -1,4 +1,4 @@
-package br.com.sicred.votacao.exception;
+package br.com.sicred.votacao.exception.handler;
 
 import java.time.LocalDateTime;
 
@@ -9,6 +9,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import br.com.sicred.votacao.dtos.ApiErrorResponse;
+import br.com.sicred.votacao.exception.business.PautaNotFoundException;
+import br.com.sicred.votacao.exception.business.SessaoEmAndamentoException;
+import br.com.sicred.votacao.exception.business.SessaoEncerradaException;
+import br.com.sicred.votacao.exception.business.SessaoJaAbertaException;
+import br.com.sicred.votacao.exception.business.VotoDuplicadoException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
