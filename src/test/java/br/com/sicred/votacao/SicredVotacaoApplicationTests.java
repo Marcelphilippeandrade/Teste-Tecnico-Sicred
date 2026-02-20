@@ -1,10 +1,10 @@
-package br.com.sicredi.votacao;
+package br.com.sicred.votacao;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class SicrediVotacaoApplicationTests {
+class SicredVotacaoApplicationTests {
 
 	@Test
 	void contextLoads() {
