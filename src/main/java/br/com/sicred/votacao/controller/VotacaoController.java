@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.sicred.votacao.dtos.PautaDTO;
 import br.com.sicred.votacao.dtos.ResultadoDTO;
+import br.com.sicred.votacao.dtos.SessaoResponseDTO;
 import br.com.sicred.votacao.dtos.VotoDTO;
 import br.com.sicred.votacao.modelo.Pauta;
 import br.com.sicred.votacao.modelo.Sessao;
@@ -36,11 +37,22 @@ public class VotacaoController {
     }
 
     @PostMapping("/{id}/sessao")
-    public ResponseEntity<Sessao> abrirSessao(
+    public ResponseEntity<SessaoResponseDTO> abrirSessao(
         @PathVariable UUID id,
         @RequestParam(required = false) Long minutos) {
-        return ResponseEntity.ok(service.abrirSessao(id, minutos));
+
+        Sessao sessao = service.abrirSessao(id, minutos);
+
+        return ResponseEntity.ok(
+            new SessaoResponseDTO(
+                sessao.getId(),
+                sessao.getInicio(),
+                sessao.getFim(),
+                sessao.getPauta().getId()
+            )
+        );
     }
+
 
     @PostMapping("/{id}/votos")
     public ResponseEntity<Void> votar(
