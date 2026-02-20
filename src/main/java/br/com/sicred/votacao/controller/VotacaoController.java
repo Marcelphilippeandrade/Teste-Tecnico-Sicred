@@ -1,7 +1,6 @@
 package br.com.sicred.votacao.controller;
 
 import java.util.UUID;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,7 +10,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 import br.com.sicred.votacao.dtos.PautaDTO;
 import br.com.sicred.votacao.dtos.ResultadoDTO;
 import br.com.sicred.votacao.dtos.SessaoResponseDTO;
@@ -52,7 +50,6 @@ public class VotacaoController {
             )
         );
     }
-
 
     @PostMapping("/{id}/votos")
     public ResponseEntity<Void> votar(

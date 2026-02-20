@@ -10,7 +10,11 @@ import br.com.sicred.votacao.dtos.ResultadoDTO;
 import br.com.sicred.votacao.dtos.VotoDTO;
 import br.com.sicred.votacao.enums.TipoVoto;
 import br.com.sicred.votacao.exception.PautaNotFoundException;
+import br.com.sicred.votacao.exception.SessaoEmAndamentoException;
 import br.com.sicred.votacao.exception.SessaoEncerradaException;
+import br.com.sicred.votacao.exception.SessaoJaAbertaException;
+import br.com.sicred.votacao.exception.SessaoNaoEncontradaException;
+import br.com.sicred.votacao.exception.VotoDuplicadoException;
 import br.com.sicred.votacao.modelo.Pauta;
 import br.com.sicred.votacao.modelo.Sessao;
 import br.com.sicred.votacao.modelo.Voto;
@@ -41,38 +45,62 @@ public class VotacaoService {
 	}
 
 	public Sessao abrirSessao(UUID pautaId, Long minutos) {
-		Pauta pauta = pautaRepository.findById(pautaId).orElseThrow(PautaNotFoundException::new);
+	    if (sessaoRepository.findByPautaId(pautaId).isPresent()) {
+	        throw new SessaoJaAbertaException();
+	    }
 
-		LocalDateTime inicio = LocalDateTime.now();
-		LocalDateTime fim = inicio.plusMinutes(minutos != null ? minutos : 1);
+	    Pauta pauta = pautaRepository.findById(pautaId)
+	        .orElseThrow(PautaNotFoundException::new);
 
-		Sessao sessao = new Sessao();
-		sessao.setInicio(inicio);
-		sessao.setFim(fim);
-		sessao.setPauta(pauta);
+	    LocalDateTime inicio = LocalDateTime.now();
+	    LocalDateTime fim = inicio.plusMinutes(minutos != null ? minutos : 1);
 
-		return sessaoRepository.save(sessao);
+	    Sessao sessao = new Sessao();
+	    sessao.setInicio(inicio);
+	    sessao.setFim(fim);
+	    sessao.setPauta(pauta);
+
+	    return sessaoRepository.save(sessao);
 	}
 
 	public void votar(UUID pautaId, VotoDTO dto) {
 
-		Sessao sessao = sessaoRepository.findByPautaId(pautaId).orElseThrow(PautaNotFoundException::new);
+	    Sessao sessao = sessaoRepository.findByPautaId(pautaId)
+	        .orElseThrow(PautaNotFoundException::new);
 
-		if (LocalDateTime.now().isAfter(sessao.getFim())) {
-			throw new SessaoEncerradaException();
-		}
+	    if (LocalDateTime.now().isAfter(sessao.getFim())) {
+	        throw new SessaoEncerradaException();
+	    }
 
-		Voto voto = new Voto();
-		voto.setCpfAssociado(dto.cpf());
-		voto.setVoto(dto.voto());
-		voto.setPauta(sessao.getPauta());
+	    if (votoRepository.existsByPautaIdAndCpfAssociado(
+	            pautaId, dto.cpf())) {
+	        throw new VotoDuplicadoException();
+	    }
 
-		votoRepository.save(voto);
+	    Voto voto = new Voto();
+	    voto.setCpfAssociado(dto.cpf());
+	    voto.setVoto(dto.voto());
+	    voto.setPauta(sessao.getPauta());
+
+	    votoRepository.save(voto);
 	}
 
 	public ResultadoDTO resultado(UUID pautaId) {
-		long sim = votoRepository.countByPautaIdAndVoto(pautaId, TipoVoto.SIM);
-		long nao = votoRepository.countByPautaIdAndVoto(pautaId, TipoVoto.NAO);
-		return new ResultadoDTO(sim, nao);
+
+	    Pauta pauta = pautaRepository.findById(pautaId)
+	        .orElseThrow(PautaNotFoundException::new);
+
+	    Sessao sessao = sessaoRepository.findByPautaId(pauta.getId())
+	        .orElseThrow(SessaoNaoEncontradaException::new);
+
+	    if (LocalDateTime.now().isBefore(sessao.getFim())) {
+	        throw new SessaoEmAndamentoException();
+	    }
+
+	    long sim = votoRepository.countByPautaIdAndVoto(pautaId, TipoVoto.SIM);
+	    long nao = votoRepository.countByPautaIdAndVoto(pautaId, TipoVoto.NAO);
+
+	    return new ResultadoDTO(sim, nao);
 	}
+
 }
