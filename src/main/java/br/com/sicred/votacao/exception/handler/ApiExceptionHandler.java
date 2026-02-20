@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import br.com.sicred.votacao.dtos.ApiErrorResponse;
+import br.com.sicred.votacao.exception.business.CpfInvalidoException;
+import br.com.sicred.votacao.exception.business.CpfNaoPodeVotarException;
 import br.com.sicred.votacao.exception.business.PautaNotFoundException;
 import br.com.sicred.votacao.exception.business.SessaoEmAndamentoException;
 import br.com.sicred.votacao.exception.business.SessaoEncerradaException;
@@ -116,5 +118,31 @@ public class ApiExceptionHandler {
 	    return ResponseEntity
 	            .status(HttpStatus.BAD_REQUEST)
 	            .body(error);
+	}
+	
+	@ExceptionHandler(CpfInvalidoException.class)
+	public ResponseEntity<ApiErrorResponse> handleCpfInvalido(
+	        CpfInvalidoException ex) {
+
+	    ApiErrorResponse error = new ApiErrorResponse(
+	        HttpStatus.NOT_FOUND.value(),
+	        ex.getMessage(),
+	        LocalDateTime.now()
+	    );
+
+	    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+	}
+
+	@ExceptionHandler(CpfNaoPodeVotarException.class)
+	public ResponseEntity<ApiErrorResponse> handleCpfNaoPodeVotar(
+	        CpfNaoPodeVotarException ex) {
+
+	    ApiErrorResponse error = new ApiErrorResponse(
+	        HttpStatus.UNPROCESSABLE_ENTITY.value(),
+	        ex.getMessage(),
+	        LocalDateTime.now()
+	    );
+
+	    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error);
 	}
 }
