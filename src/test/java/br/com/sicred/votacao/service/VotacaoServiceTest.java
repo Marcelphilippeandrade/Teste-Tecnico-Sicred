@@ -19,6 +19,7 @@ import br.com.sicred.votacao.dtos.ResultadoDTO;
 import br.com.sicred.votacao.dtos.VotoDTO;
 import br.com.sicred.votacao.enums.TipoVoto;
 import br.com.sicred.votacao.exception.business.*;
+import br.com.sicred.votacao.integration.client.CpfValidationClient;
 import br.com.sicred.votacao.modelo.Pauta;
 import br.com.sicred.votacao.modelo.Sessao;
 import br.com.sicred.votacao.modelo.Voto;
@@ -40,6 +41,9 @@ class VotacaoServiceTest {
 
     @InjectMocks
     private VotacaoService votacaoService;
+    
+    @Mock
+    private CpfValidationClient cpfValidationClient;
 
     private UUID pautaId;
     private Pauta pauta;
@@ -198,5 +202,57 @@ class VotacaoServiceTest {
             SessaoEmAndamentoException.class,
             () -> votacaoService.resultado(pautaId)
         );
+    }
+    
+    @Test
+    void naoDevePermitirVotoQuandoCpfInvalido() {
+        Sessao sessao = new Sessao();
+        sessao.setFim(LocalDateTime.now().plusMinutes(5));
+        sessao.setPauta(pauta);
+
+        VotoDTO dto = new VotoDTO("12345678901", TipoVoto.SIM);
+
+        when(sessaoRepository.findByPautaId(pautaId))
+            .thenReturn(Optional.of(sessao));
+
+        when(votoRepository.existsByPautaIdAndCpfAssociado(pautaId, dto.cpf()))
+            .thenReturn(false);
+
+        doThrow(CpfInvalidoException.class)
+            .when(cpfValidationClient)
+            .validarCpfParaVoto(dto.cpf());
+
+        assertThrows(
+            CpfInvalidoException.class,
+            () -> votacaoService.votar(pautaId, dto)
+        );
+
+        verify(votoRepository, never()).save(any());
+    }
+    
+    @Test
+    void naoDevePermitirVotoQuandoCpfNaoPodeVotar() {
+        Sessao sessao = new Sessao();
+        sessao.setFim(LocalDateTime.now().plusMinutes(5));
+        sessao.setPauta(pauta);
+
+        VotoDTO dto = new VotoDTO("12345678901", TipoVoto.NAO);
+
+        when(sessaoRepository.findByPautaId(pautaId))
+            .thenReturn(Optional.of(sessao));
+
+        when(votoRepository.existsByPautaIdAndCpfAssociado(pautaId, dto.cpf()))
+            .thenReturn(false);
+
+        doThrow(CpfNaoPodeVotarException.class)
+            .when(cpfValidationClient)
+            .validarCpfParaVoto(dto.cpf());
+
+        assertThrows(
+            CpfNaoPodeVotarException.class,
+            () -> votacaoService.votar(pautaId, dto)
+        );
+
+        verify(votoRepository, never()).save(any());
     }
 }
