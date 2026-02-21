@@ -1,0 +1,225 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Infraestrutura Sicredi Votacao - ECR + Secrets + Subnets + RDS
+
+Resources:
+
+  EcrRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: sicredi-votacao-api
+      ImageScanningConfiguration:
+        ScanOnPush: true
+
+  DatabaseSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: sicredi-votacao-db-secret
+      Description: Credenciais do banco PostgreSQL da API de Votacao
+      GenerateSecretString:
+        SecretStringTemplate: '{"username":"votacao"}'
+        GenerateStringKey: password
+        PasswordLength: 16
+        ExcludeCharacters: '"@/\\'
+
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: vpc-076f76de3e8f28af2
+      CidrBlock: 172.31.100.0/24
+      AvailabilityZone: us-east-1a
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: sicredi-votacao-subnet-a
+
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: vpc-076f76de3e8f28af2
+      CidrBlock: 172.31.101.0/24
+      AvailabilityZone: us-east-1b
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: sicredi-votacao-subnet-b
+
+  DbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group do RDS PostgreSQL
+      VpcId: vpc-076f76de3e8f28af2
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+
+  DbSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group do RDS
+      SubnetIds:
+        - !Ref PublicSubnetA
+        - !Ref PublicSubnetB
+
+  PostgresDB:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: sicredi-votacao-db
+      Engine: postgres
+      DBInstanceClass: db.t3.micro
+      AllocatedStorage: 20
+      DBName: votacao
+      MasterUsername: !Sub "{{resolve:secretsmanager:${DatabaseSecret}:SecretString:username}}"
+      MasterUserPassword: !Sub "{{resolve:secretsmanager:${DatabaseSecret}:SecretString:password}}"
+      VPCSecurityGroups:
+        - !Ref DbSecurityGroup
+      DBSubnetGroupName: !Ref DbSubnetGroup
+      PubliclyAccessible: true
+      BackupRetentionPeriod: 0
+
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: sicredi-votacao-cluster
+
+  AlbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group do ALB
+      VpcId: vpc-076f76de3e8f28af2
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: sicredi-votacao-alb
+      Scheme: internet-facing
+      Type: application
+      Subnets:
+        - !Ref PublicSubnetA
+        - !Ref PublicSubnetB
+      SecurityGroups:
+        - !Ref AlbSecurityGroup
+
+  AlbTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: sicredi-votacao-tg
+      Port: 8080
+      Protocol: HTTP
+      TargetType: ip
+      VpcId: vpc-076f76de3e8f28af2
+      HealthCheckPath: /actuator/health
+      HealthCheckIntervalSeconds: 30
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+
+  AlbListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref AlbTargetGroup
+
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: sicredi-votacao-ecs-execution-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Policies:
+        - PolicyName: AllowSecretsAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: "*"
+
+  EcsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/sicredi-votacao
+      RetentionInDays: 7
+
+  VotacaoTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: sicredi-votacao-task
+      Cpu: "512"
+      Memory: "1024"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      ContainerDefinitions:
+        - Name: sicredi-votacao-api
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/sicredi-votacao-api:latest"
+
+          PortMappings:
+            - ContainerPort: 8080
+              Protocol: tcp
+
+          Environment:
+            - Name: SPRING_PROFILES_ACTIVE
+              Value: prod
+
+            - Name: SPRING_DATASOURCE_URL
+              Value: !Sub
+                - jdbc:postgresql://${DBEndpoint}:${DBPort}/votacao
+                - DBEndpoint: !GetAtt PostgresDB.Endpoint.Address
+                  DBPort: !GetAtt PostgresDB.Endpoint.Port
+
+          Secrets:
+            - Name: SPRING_DATASOURCE_USERNAME
+              ValueFrom: !Ref DatabaseSecret
+            - Name: SPRING_DATASOURCE_PASSWORD
+              ValueFrom: !Ref DatabaseSecret
+
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/sicredi-votacao
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+              
+  VotacaoService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - AlbListener
+    Properties:
+      ServiceName: sicredi-votacao-service
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref VotacaoTaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref PublicSubnetA
+            - !Ref PublicSubnetB
+          SecurityGroups:
+            - !Ref AlbSecurityGroup
+
+      LoadBalancers:
+        - ContainerName: sicredi-votacao-api
+          ContainerPort: 8080
+          TargetGroupArn: !Ref AlbTargetGroup
