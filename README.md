@@ -277,8 +277,6 @@ Este projeto prioriza:
 - Portabilidade
 - Clareza para avaliação técnica
 
-A decisão de não finalizar todo o deploy em ECS via CloudFormation foi consciente e estratégica, focando em entregar uma solução sólida, funcional e avaliável.
-
 ---
 
 ## 🔐 Acesso ao Repositório
