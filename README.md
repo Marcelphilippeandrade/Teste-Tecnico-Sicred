@@ -281,6 +281,13 @@ A decisão de não finalizar todo o deploy em ECS via CloudFormation foi conscie
 
 ---
 
+## 🔐 Acesso ao Repositório
+
+Este repositório é privado. O acesso foi concedido ao email informado
+pela equipe avaliadora exclusivamente para fins de avaliação técnica.
+
+---
+
 ## 📞 Contato
 
 Qualquer dúvida sobre decisões técnicas pode ser esclarecida durante a avaliação.
