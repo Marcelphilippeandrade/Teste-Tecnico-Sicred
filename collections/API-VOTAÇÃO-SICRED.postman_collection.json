@@ -1,0 +1,145 @@
+{
+	"info": {
+		"_postman_id": "f93d34f6-110f-4fda-987e-d2042bb04144",
+		"name": "API-VOTAÇÃO-SICRED",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "2086778"
+	},
+	"item": [
+		{
+			"name": "CRIAR_PAUTAS",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"titulo\": \"Pauta sobre aumento de capital\",\r\n  \"descricao\": \"Votação para decidir sobre aumento de capital social\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/v1/pautas",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"pautas"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": " CRIAR_SESSÃO_DE_VOTAÇÃO ",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/v1/pautas/950523af-6fcf-4a31-8ac9-366ffc7f2884/sessao?minutos=5",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"pautas",
+						"950523af-6fcf-4a31-8ac9-366ffc7f2884",
+						"sessao"
+					],
+					"query": [
+						{
+							"key": "minutos",
+							"value": "5"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "VOTAR_PAUTA",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"cpf\": \"99998275199\",\r\n  \"voto\": \"SIM\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/v1/pautas/950523af-6fcf-4a31-8ac9-366ffc7f2884/votos",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"pautas",
+						"950523af-6fcf-4a31-8ac9-366ffc7f2884",
+						"votos"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "LISTAR_RESULTADO_DA_VOTAÇÃO",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/v1/pautas/73fc1bc1-f392-4ada-a2d0-d9000db0bb73/resultado",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"pautas",
+						"73fc1bc1-f392-4ada-a2d0-d9000db0bb73",
+						"resultado"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
